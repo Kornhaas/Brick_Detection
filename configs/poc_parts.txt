@@ -1,0 +1,11 @@
+# Small, verified start set. Extend only after each part family renders correctly.
+3001.dat
+3002.dat
+3003.dat
+3004.dat
+3005.dat
+3008.dat
+3010.dat
+3020.dat
+3068b.dat
+3710.dat

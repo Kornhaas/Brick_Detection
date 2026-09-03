@@ -1,0 +1,34 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python quality (3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: poetry
+      - name: Install Poetry
+        run: pipx install poetry==1.8.4
+      - name: Install project and quality tools
+        run: poetry install --with dev --no-interaction
+      - name: Check formatting
+        run: poetry run ruff format --check .
+      - name: Lint
+        run: poetry run ruff check .
+      - name: Type check
+        run: poetry run mypy src
+      - name: Test
+        run: poetry run pytest
+      - name: Dependency vulnerability audit
+        run: poetry run pip install pip-audit && poetry run pip-audit

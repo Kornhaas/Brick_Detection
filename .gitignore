@@ -151,6 +151,13 @@ activemq-data/
 .env
 .envrc
 .venv
+
+# BrickVision: lokal erzeugte oder lizenzgebundene Datenartefakte
+/data/
+/artifacts/
+*.faiss
+*.sqlite
+*.sqlite3
 env/
 venv/
 ENV/

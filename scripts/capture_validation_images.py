@@ -93,7 +93,8 @@ class CaptureApplication:
             if self.status.get().endswith("wird gestartet …"):
                 height, width = frame.shape[:2]
                 self.status.set(
-                    f"Live: {width}×{height}. Ziel: {self.validation_root.name}. Erkennung startet …"
+                    f"Live: {width}×{height}. Ziel: {self.validation_root.name}. "
+                    "Erkennung startet …"
                 )
                 if self.index is not None and not self.has_started_initial_recognition:
                     self.has_started_initial_recognition = True

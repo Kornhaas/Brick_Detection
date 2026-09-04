@@ -26,6 +26,17 @@ Architekturentscheidungen werden nicht stillschweigend im Code versteckt.
    nicht abgeschlossen.
 5. Pull Request erstellen; die GitHub-Checks müssen erfolgreich sein.
 
+## Selbstständige Ausführung
+
+AI-Agenten führen alle im Projekt verfügbaren Schritte selbst aus: Installation
+über Poetry, Imports, Renderer, Tests, Qualitätschecks, Git-Commits und – bei
+erteilter Berechtigung – Pushes. Befehle werden dem Nutzer nur als Nachweis
+oder zur späteren Reproduktion gezeigt, nicht als Aufforderung zum Copy/Paste.
+
+Nutzereingaben sind nur erforderlich, wenn eine Handlung außerhalb des
+Arbeitsbereichs liegt oder zwingend menschliche Information braucht, etwa das
+Fotografieren eines physischen Teils, eine Hardware-Verkabelung oder Zugangsdaten.
+
 ## Code- und Qualitätsregeln
 
 - Python-Code liegt in `src/`, Tests in `tests/`.

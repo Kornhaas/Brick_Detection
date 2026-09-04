@@ -57,33 +57,31 @@ class CaptureApplication:
             )
         self.minimum_similarity = minimum_similarity
         self.maximum_suggestions = maximum_suggestions
+        self.has_started_initial_recognition = False
 
         root.title(f"BrickVision – Validierungsaufnahmen ({self.validation_root.name})")
         root.protocol("WM_DELETE_WINDOW", self.close)
         root.minsize(760, 620)
         controls = ttk.Frame(root, padding=12)
         controls.pack(fill="x")
-        ttk.Label(controls, text="Bekannte LDraw-Teil-ID:").grid(row=0, column=0, sticky="w")
+        if self.index is not None:
+            ttk.Button(controls, text="Teil erkennen", command=self.suggest).grid(
+                row=0, column=0, padx=(0, 12), sticky="w"
+            )
+            self.suggestion_buttons = ttk.Frame(controls)
+            self.suggestion_buttons.grid(row=0, column=1, sticky="ew")
+        ttk.Label(controls, text="Manuelle ID (Fallback):").grid(row=1, column=0, sticky="w")
         self.part_id = tk.StringVar()
         part_input = ttk.Entry(controls, textvariable=self.part_id, width=28)
-        part_input.grid(row=0, column=1, padx=(8, 16), sticky="ew")
-        part_input.focus_set()
-        ttk.Button(controls, text="Teil-ID speichern", command=self.capture).grid(row=0, column=2)
+        part_input.grid(row=1, column=1, padx=(8, 16), sticky="ew")
+        ttk.Button(controls, text="Manuell speichern", command=self.capture).grid(row=1, column=2)
         controls.columnconfigure(1, weight=1)
         self.status = tk.StringVar(value=f"Kamera {camera_index} wird gestartet …")
         ttk.Label(controls, textvariable=self.status).grid(
-            row=1, column=0, columnspan=3, pady=(8, 0), sticky="w"
+            row=2, column=0, columnspan=3, pady=(8, 0), sticky="w"
         )
         self.preview = ttk.Label(root, anchor="center")
         self.preview.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-        if self.index is not None:
-            suggestion_box = ttk.LabelFrame(root, text="Render-Vorschläge", padding=12)
-            suggestion_box.pack(fill="x", padx=12, pady=(0, 12))
-            ttk.Button(suggestion_box, text="Vorschläge anzeigen", command=self.suggest).pack(
-                side="left", padx=(0, 8)
-            )
-            self.suggestion_buttons = ttk.Frame(suggestion_box)
-            self.suggestion_buttons.pack(side="left", fill="x", expand=True)
         root.bind("<Return>", lambda _event: self.capture())
         self.update_preview()
 
@@ -95,8 +93,11 @@ class CaptureApplication:
             if self.status.get().endswith("wird gestartet …"):
                 height, width = frame.shape[:2]
                 self.status.set(
-                    f"Live: {width}×{height}. Ziel: {self.validation_root.name}. Teil-ID eingeben."
+                    f"Live: {width}×{height}. Ziel: {self.validation_root.name}. Erkennung startet …"
                 )
+                if self.index is not None and not self.has_started_initial_recognition:
+                    self.has_started_initial_recognition = True
+                    self.root.after(100, self.suggest)
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(rgb_frame)
             image.thumbnail((960, 700))

@@ -81,6 +81,9 @@ Der Modus erzeugt automatisch einen getrennten Ordner unter
 `data/references/real/session-.../`. Der anfängliche Filter liegt bei 50 %;
 `--min-similarity 0.6` setzt ihn auf 60 %. Weitere Regeln stehen in
 [ADR-008](docs/architecture/decisions/ADR-008-menschlich-bestaetigte-referenzbilder.md).
+Die erste Erkennung startet automatisch; für jedes neu eingelegte Teil steht
+oben deutlich der Button „Teil erkennen“ bereit. Das ID-Feld ist nur der
+manuelle Fallback.
 
 Der erweiterte lokale Vergleichsindex kann nach der Renderung mit
 `data/indexes/poc-60-v1.npz` als `--index` verwendet werden. Seine

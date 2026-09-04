@@ -35,6 +35,25 @@ Die aktuelle synthetische Messung und das Protokoll für die noch ausstehende
 Kameravalidierung stehen in [BASELINE_RESULTS.md](docs/planning/BASELINE_RESULTS.md)
 und [REAL_VALIDATION_CAPTURE.md](docs/planning/REAL_VALIDATION_CAPTURE.md).
 
+### Aufnahmen mit der Fotobox
+
+Die USB-Kamera-App benötigt die optionale Aufnahmegruppe und startet lokal mit:
+
+```powershell
+poetry install --with dev,capture
+poetry run python scripts/capture_validation_images.py --camera 0
+```
+
+Teil-ID eingeben, den Stein zentrieren und „Foto aufnehmen“ (oder Enter)
+wählen. Bilder und `manifest.csv` bleiben unter `data/validation/` lokal und
+werden nicht eingecheckt. Die erkannten Bilder können anschließend gemessen
+werden:
+
+```powershell
+poetry install --with dev,ml,capture
+poetry run python scripts/evaluate_real_images.py --index data/indexes/poc-v1.npz --manifest data/validation/manifest.csv
+```
+
 ## Qualität und Zusammenarbeit
 
 - Rollen, Arbeitsablauf und Qualitätsregeln: [AGENTS.md](AGENTS.md)

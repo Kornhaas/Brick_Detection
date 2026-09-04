@@ -44,6 +44,11 @@ poetry install --with dev,capture
 poetry run python scripts/capture_validation_images.py --camera 0
 ```
 
+Für die verwendete InnoMaker U20-16MP-AF fordert die App standardmäßig MJPEG
+mit `4656×3496` bei 15 fps an; die Live-Anzeige nennt die tatsächlich gelieferte
+Auflösung. Für einen schnelleren Einrichtungscheck kann sie etwa mit
+`--width 1920 --height 1080 --fps 30` gestartet werden.
+
 Teil-ID eingeben, den Stein zentrieren und „Foto aufnehmen“ (oder Enter)
 wählen. Bilder und `manifest.csv` bleiben unter `data/validation/` lokal und
 werden nicht eingecheckt. Die erkannten Bilder können anschließend gemessen

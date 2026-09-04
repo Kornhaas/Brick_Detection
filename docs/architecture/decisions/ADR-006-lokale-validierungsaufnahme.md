@@ -23,6 +23,11 @@ OpenCV und Pillow liegen in der optionalen Poetry-Gruppe `capture`. Die App
 hat weder Netzwerkzugriff noch Zugriff auf Brick Manager oder eine
 Lagerzuordnung.
 
+Für die InnoMaker U20-16MP-AF fragt die Anwendung MJPEG mit `4656×3496` bei
+15 fps an. Die tatsächlich gelieferte Auflösung wird aus dem ersten Bild
+ermittelt und sichtbar angezeigt, da UVC-Geräte die angeforderte Einstellung
+ablehnen oder auf eine unterstützte Variante zurückfallen können.
+
 ## Konsequenzen
 
 - Aufnahmen sind direkt mit `evaluate_real_images.py` auswertbar.

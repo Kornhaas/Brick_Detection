@@ -22,13 +22,25 @@ from brick_detection.capture import (
 class CaptureApplication:
     """Preview one camera and persist deliberate, labeled captures."""
 
-    def __init__(self, root: tk.Tk, camera_index: int, validation_root: Path) -> None:
+    def __init__(
+        self,
+        root: tk.Tk,
+        camera_index: int,
+        validation_root: Path,
+        width: int,
+        height: int,
+        fps: int,
+    ) -> None:
         self.root = root
         self.validation_root = validation_root.resolve()
         self.camera = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
         if not self.camera.isOpened():
             self.camera.release()
             raise RuntimeError(f"USB camera {camera_index} could not be opened.")
+        self.camera.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        self.camera.set(cv2.CAP_PROP_FPS, fps)
         self.latest_frame: object | None = None
 
         root.title("BrickVision – Validierungsaufnahmen")
@@ -43,7 +55,7 @@ class CaptureApplication:
         part_input.focus_set()
         ttk.Button(controls, text="Foto aufnehmen", command=self.capture).grid(row=0, column=2)
         controls.columnconfigure(1, weight=1)
-        self.status = tk.StringVar(value="Kamera wird gestartet …")
+        self.status = tk.StringVar(value=f"Kamera {camera_index} wird gestartet …")
         ttk.Label(controls, textvariable=self.status).grid(
             row=1, column=0, columnspan=3, pady=(8, 0), sticky="w"
         )
@@ -57,6 +69,9 @@ class CaptureApplication:
         success, frame = self.camera.read()
         if success:
             self.latest_frame = frame
+            if self.status.get().endswith("wird gestartet …"):
+                height, width = frame.shape[:2]
+                self.status.set(f"Live: {width}×{height}. Teil-ID eingeben und Aufnahme auslösen.")
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(rgb_frame)
             image.thumbnail((960, 700))
@@ -96,11 +111,25 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--camera", type=int, default=0, help="USB camera index (default: 0)")
     parser.add_argument(
+        "--width", type=int, default=4656, help="Requested capture width (default: 4656)"
+    )
+    parser.add_argument(
+        "--height", type=int, default=3496, help="Requested capture height (default: 3496)"
+    )
+    parser.add_argument("--fps", type=int, default=15, help="Requested capture rate (default: 15)")
+    parser.add_argument(
         "--output", type=Path, default=Path("data/validation"), help="Local validation directory"
     )
     arguments = parser.parse_args()
     root = tk.Tk()
-    CaptureApplication(root, arguments.camera, arguments.output)
+    CaptureApplication(
+        root,
+        arguments.camera,
+        arguments.output,
+        arguments.width,
+        arguments.height,
+        arguments.fps,
+    )
     root.mainloop()
 
 

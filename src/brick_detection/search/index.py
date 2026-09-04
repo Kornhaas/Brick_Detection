@@ -61,7 +61,9 @@ class EmbeddingIndex:
         for part_id, values in grouped.items():
             strongest_evidence = sorted(values, reverse=True)[:evidence_view_k]
             candidates.append(
-                PartCandidate(part_id, sum(strongest_evidence) / len(strongest_evidence), len(values))
+                PartCandidate(
+                    part_id, sum(strongest_evidence) / len(strongest_evidence), len(values)
+                )
             )
         return sorted(candidates, key=lambda candidate: candidate.score, reverse=True)[:top_part_k]
 

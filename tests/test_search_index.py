@@ -22,9 +22,7 @@ def test_query_aggregates_multiple_matching_views_by_part() -> None:
 
 def test_query_scores_a_part_using_only_its_strongest_evidence_views() -> None:
     index = EmbeddingIndex(
-        vectors=np.array(
-            [[1.0, 0.0], [0.8, 0.6], [0.6, 0.8], [0.0, 1.0]], dtype=np.float32
-        ),
+        vectors=np.array([[1.0, 0.0], [0.8, 0.6], [0.6, 0.8], [0.0, 1.0]], dtype=np.float32),
         part_ids=("3001", "3001", "3001", "3002"),
         image_paths=("a.png", "b.png", "c.png", "d.png"),
         model_version="test-v1",

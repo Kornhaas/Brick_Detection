@@ -21,6 +21,7 @@ def main() -> None:
     parser.add_argument("--library", type=Path, required=True)
     parser.add_argument("--parts", type=Path, default=Path("configs/poc_parts.txt"))
     parser.add_argument("--output", type=Path, default=Path("data/renders/poc"))
+    parser.add_argument("--view-set", default="poc-28")
     arguments = parser.parse_args()
     repository_root = Path(__file__).resolve().parents[1]
     for part in parts_from_manifest(arguments.parts.resolve()):
@@ -38,7 +39,7 @@ def main() -> None:
             "--output",
             str((arguments.output / Path(part).stem).resolve()),
             "--view-set",
-            "poc-28",
+            arguments.view_set,
         ]
         print(f"Rendering {part}")
         subprocess.run(command, check=True)

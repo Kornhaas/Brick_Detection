@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from importlib import import_module
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+
+from brick_detection.vision.preprocess import foreground_square_crop
 
 DINOV2_REVISION = "7764ea0f912e53c92e82eb78a2a1631e92725fc8"
 MODEL_NAME = "dinov2_vits14"
@@ -21,9 +25,16 @@ class DINOv2Encoder:
 
         self._torch = torch
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = torch.hub.load(
-            f"facebookresearch/dinov2:{DINOV2_REVISION}", MODEL_NAME, trust_repo=True
-        ).to(self.device)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"xFormers is not available.*",
+                category=UserWarning,
+                module=r"dinov2\.layers\..*",
+            )
+            self.model = torch.hub.load(
+                f"facebookresearch/dinov2:{DINOV2_REVISION}", MODEL_NAME, trust_repo=True
+            ).to(self.device)
         self.model.eval()
         self.transform = transforms.Compose(
             [
@@ -38,18 +49,28 @@ class DINOv2Encoder:
         """Return a stable identifier stored alongside generated embeddings."""
         return f"{MODEL_NAME}@{DINOV2_REVISION[:12]}"
 
-    def embed_paths(self, paths: Sequence[Path], batch_size: int = 32) -> np.ndarray:
+    def embed_paths(
+        self, paths: Sequence[Path], batch_size: int = 32, crop_foreground: bool = False
+    ) -> np.ndarray:
         """Return L2-normalized embeddings in the input path order."""
         image_module = import_module("PIL.Image")
+        images = [image_module.open(path).convert("RGB") for path in paths]
+        return self.embed_images(images, batch_size, crop_foreground)
+
+    def embed_images(
+        self, images: Sequence[Any], batch_size: int = 32, crop_foreground: bool = False
+    ) -> np.ndarray:
+        """Return normalized embeddings for already loaded RGB-compatible images."""
 
         vectors: list[np.ndarray] = []
         with self._torch.inference_mode():
-            for start in range(0, len(paths), batch_size):
-                images = [
-                    self.transform(image_module.open(path).convert("RGB"))
-                    for path in paths[start : start + batch_size]
-                ]
-                output = self.model(self._torch.stack(images).to(self.device))
+            for start in range(0, len(images), batch_size):
+                transformed = []
+                for image in images[start : start + batch_size]:
+                    if crop_foreground:
+                        image = foreground_square_crop(image)
+                    transformed.append(self.transform(image))
+                output = self.model(self._torch.stack(transformed).to(self.device))
                 normalized = self._torch.nn.functional.normalize(output, dim=1)
                 vectors.append(normalized.cpu().numpy().astype(np.float32))
         return np.concatenate(vectors, axis=0) if vectors else np.empty((0, 0), dtype=np.float32)

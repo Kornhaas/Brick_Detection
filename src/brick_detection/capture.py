@@ -34,6 +34,11 @@ def capture_path(validation_root: Path, part_id: str, captured_at: datetime) -> 
     return validation_root / "images" / f"{safe_part_id}_{timestamp}.jpg"
 
 
+def new_holdout_root(base_directory: Path, created_at: datetime) -> Path:
+    """Create a distinct, date-stamped directory name for an unseen evaluation set."""
+    return base_directory / f"holdout-{created_at.strftime('%Y%m%d-%H%M%S')}"
+
+
 def append_manifest_record(validation_root: Path, record: CaptureRecord) -> None:
     """Append one relative image path and its known part ID to the CSV manifest."""
     manifest_path = validation_root / "manifest.csv"
@@ -46,3 +51,17 @@ def append_manifest_record(validation_root: Path, record: CaptureRecord) -> None
         writer.writerow(
             {"image_path": record.image_path, "part_id": validate_part_id(record.part_id)}
         )
+
+
+def manifest_records(validation_root: Path) -> list[CaptureRecord]:
+    """Load the deliberate labels already recorded for one local capture session."""
+    manifest_path = validation_root / "manifest.csv"
+    if not manifest_path.is_file():
+        return []
+    with manifest_path.open(encoding="utf-8-sig", newline="") as file:
+        reader = csv.DictReader(file)
+        return [
+            CaptureRecord(row["image_path"], validate_part_id(row["part_id"]))
+            for row in reader
+            if row.get("image_path") and row.get("part_id")
+        ]

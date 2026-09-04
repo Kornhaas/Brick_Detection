@@ -3,7 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from brick_detection.assisted_capture import new_reference_root, visible_suggestions
+from brick_detection.assisted_capture import (
+    new_reference_root,
+    suggestion_preview_paths,
+    visible_suggestions,
+)
 from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
@@ -46,6 +50,19 @@ def test_new_reference_root_is_separate_from_holdout_root(tmp_path: Path) -> Non
 def test_validate_part_id_rejects_unsafe_names(part_id: str) -> None:
     with pytest.raises(ValueError):
         validate_part_id(part_id)
+
+
+def test_suggestion_preview_paths_use_first_stable_render_for_each_part() -> None:
+    previews = suggestion_preview_paths(
+        [PartCandidate("3002", 0.8, 1), PartCandidate("3001", 0.7, 1)],
+        ("/renders/3001/00.png", "/renders/3001/01.png", "/renders/3002/00.png"),
+        ("3001", "3001", "3002"),
+    )
+
+    assert previews == {
+        "3001": Path("/renders/3001/00.png"),
+        "3002": Path("/renders/3002/00.png"),
+    }
 
 
 def test_append_manifest_record_creates_a_valid_csv(tmp_path: Path) -> None:

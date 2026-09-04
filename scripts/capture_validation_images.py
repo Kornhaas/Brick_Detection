@@ -11,7 +11,11 @@ from tkinter import ttk
 import cv2
 from PIL import Image, ImageTk
 
-from brick_detection.assisted_capture import new_reference_root, visible_suggestions
+from brick_detection.assisted_capture import (
+    new_reference_root,
+    suggestion_preview_paths,
+    visible_suggestions,
+)
 from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
@@ -58,6 +62,7 @@ class CaptureApplication:
         self.minimum_similarity = minimum_similarity
         self.maximum_suggestions = maximum_suggestions
         self.has_started_initial_recognition = False
+        self.suggestion_images: list[ImageTk.PhotoImage] = []
 
         root.title(f"BrickVision – Validierungsaufnahmen ({self.validation_root.name})")
         root.protocol("WM_DELETE_WINDOW", self.close)
@@ -123,17 +128,37 @@ class CaptureApplication:
         )
         for button in self.suggestion_buttons.winfo_children():
             button.destroy()
+        self.suggestion_images = []
         if not candidates:
             self.status.set("Kein Vorschlag über dem Similarity-Filter. Teil-ID manuell eingeben.")
             return
-        for candidate in candidates:
+        preview_paths = suggestion_preview_paths(
+            candidates, self.index.image_paths, self.index.part_ids
+        )
+        for column, candidate in enumerate(candidates):
             label = f"{candidate.part_id} ({candidate.score:.1%} ähnlich)"
-            ttk.Button(
+            preview = self.load_suggestion_preview(preview_paths.get(candidate.part_id))
+            button = ttk.Button(
                 self.suggestion_buttons,
                 text=label,
                 command=lambda part_id=candidate.part_id: self.confirm_suggestion(part_id),
-            ).pack(side="left", padx=4)
+                compound="top",
+            )
+            if preview is not None:
+                button.configure(image=preview)
+                self.suggestion_images.append(preview)
+            button.grid(row=0, column=column, padx=4, sticky="n")
         self.status.set("Vorschlag wählen, nur wenn das echte Teil sicher bestätigt ist.")
+
+    @staticmethod
+    def load_suggestion_preview(path: Path | None) -> ImageTk.PhotoImage | None:
+        """Load a compact render preview without preventing candidate selection on failure."""
+        if path is None or not path.is_file():
+            return None
+        with Image.open(path) as image:
+            preview = image.copy()
+        preview.thumbnail((110, 110))
+        return ImageTk.PhotoImage(image=preview)
 
     def confirm_suggestion(self, part_id: str) -> None:
         """Copy a deliberately selected suggestion into the known-ID field and save it."""

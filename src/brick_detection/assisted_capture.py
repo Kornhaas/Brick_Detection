@@ -24,3 +24,19 @@ def visible_suggestions(
     return [candidate for candidate in candidates if candidate.score >= minimum_score][
         :maximum_count
     ]
+
+
+def suggestion_preview_paths(
+    candidates: list[PartCandidate], image_paths: tuple[str, ...], part_ids: tuple[str, ...]
+) -> dict[str, Path]:
+    """Choose one stable rendered preview image for every visible part suggestion."""
+    if len(image_paths) != len(part_ids):
+        raise ValueError("Image paths and part IDs must have matching lengths.")
+    first_path_by_part: dict[str, Path] = {}
+    for image_path, part_id in zip(image_paths, part_ids, strict=True):
+        first_path_by_part.setdefault(part_id, Path(image_path))
+    return {
+        candidate.part_id: first_path_by_part[candidate.part_id]
+        for candidate in candidates
+        if candidate.part_id in first_path_by_part
+    }

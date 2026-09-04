@@ -6,7 +6,7 @@ import argparse
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
-from tkinter import ttk
+from tkinter import scrolledtext, ttk
 
 import cv2
 from PIL import Image, ImageTk
@@ -61,11 +61,12 @@ class CaptureApplication:
             raise RuntimeError(
                 f"Index expects {self.index.model_version}, encoder is {self.encoder.version}."
             )
-        self.add_existing_session_references()
         self.minimum_similarity = minimum_similarity
         self.maximum_suggestions = maximum_suggestions
         self.has_started_initial_recognition = False
+        self.has_received_first_frame = False
         self.suggestion_images: list[ImageTk.PhotoImage] = []
+        self.camera_error_reported = False
 
         root.title(f"BrickVision – Validierungsaufnahmen ({self.validation_root.name})")
         root.protocol("WM_DELETE_WINDOW", self.close)
@@ -89,18 +90,36 @@ class CaptureApplication:
             row=2, column=0, columnspan=3, pady=(8, 0), sticky="w"
         )
         self.preview = ttk.Label(root, anchor="center")
-        self.preview.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+        self.preview.pack(fill="both", expand=True, padx=12, pady=(0, 8))
+        activity = ttk.LabelFrame(root, text="Aktivitaetslog", padding=6)
+        activity.pack(fill="x", padx=12, pady=(0, 12))
+        self.activity_log = scrolledtext.ScrolledText(activity, height=5, state="disabled")
+        self.activity_log.pack(fill="x")
+        self.report(f"Starte Kamera {camera_index}; Ziel: {self.validation_root.name}")
+        if self.index is not None:
+            self.report(f"Renderindex geladen: {len(self.index.part_ids)} Ansichten")
+        self.add_existing_session_references()
         root.bind("<Return>", lambda _event: self.capture())
         self.update_preview()
+
+    def report(self, message: str) -> None:
+        """Show the current meaningful operation in the status line and activity log."""
+        self.status.set(message)
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.activity_log.configure(state="normal")
+        self.activity_log.insert("end", f"[{timestamp}] {message}\n")
+        self.activity_log.see("end")
+        self.activity_log.configure(state="disabled")
 
     def update_preview(self) -> None:
         """Read and display the next preview frame."""
         success, frame = self.camera.read()
         if success:
             self.latest_frame = frame
-            if self.status.get().endswith("wird gestartet …"):
+            if not self.has_received_first_frame:
+                self.has_received_first_frame = True
                 height, width = frame.shape[:2]
-                self.status.set(
+                self.report(
                     f"Live: {width}×{height}. Ziel: {self.validation_root.name}. "
                     "Erkennung startet …"
                 )
@@ -114,14 +133,19 @@ class CaptureApplication:
             self.preview.configure(image=rendered)
             self.preview.image = rendered
         else:
-            self.status.set("Kein Kamerabild verfügbar. Verbindung und Kameraindex prüfen.")
+            if not self.camera_error_reported:
+                self.camera_error_reported = True
+                self.report("Kein Kamerabild verfügbar. Verbindung und Kameraindex prüfen.")
         self.root.after(30, self.update_preview)
 
     def suggest(self) -> None:
         """Show render-index candidates; saving still requires explicit human confirmation."""
         if self.latest_frame is None or self.index is None or self.encoder is None:
-            self.status.set("Noch kein Kamerabild für Vorschläge verfügbar.")
+            self.report("Erkennung wartet noch auf ein Kamerabild.")
             return
+        self.report(
+            "Erkennung läuft: Vordergrund wird zugeschnitten und mit Referenzen verglichen."
+        )
         image = Image.fromarray(cv2.cvtColor(self.latest_frame, cv2.COLOR_BGR2RGB))
         vector = self.encoder.embed_images([image], crop_foreground=True)[0]
         candidates = visible_suggestions(
@@ -133,7 +157,7 @@ class CaptureApplication:
             button.destroy()
         self.suggestion_images = []
         if not candidates:
-            self.status.set("Kein Vorschlag über dem Similarity-Filter. Teil-ID manuell eingeben.")
+            self.report("Kein Vorschlag über dem Similarity-Filter. Teil-ID manuell eingeben.")
             return
         preview_paths = suggestion_preview_paths(
             candidates, self.index.image_paths, self.index.part_ids
@@ -151,7 +175,11 @@ class CaptureApplication:
                 button.configure(image=preview)
                 self.suggestion_images.append(preview)
             button.grid(row=0, column=column, padx=4, sticky="n")
-        self.status.set("Vorschlag wählen, nur wenn das echte Teil sicher bestätigt ist.")
+        top_candidate = candidates[0]
+        self.report(
+            f"{len(candidates)} Vorschläge bereit; Top: {top_candidate.part_id} "
+            f"mit {top_candidate.score:.1%} Ähnlichkeit. Bitte visuell bestätigen."
+        )
 
     @staticmethod
     def load_suggestion_preview(path: Path | None) -> ImageTk.PhotoImage | None:
@@ -174,29 +202,35 @@ class CaptureApplication:
         try:
             part_id = validate_part_id(self.part_id.get())
         except ValueError as error:
-            self.status.set(f"Nicht gespeichert: {error}")
+            self.report(f"Nicht gespeichert: {error}")
             return
         if self.latest_frame is None:
-            self.status.set("Noch kein Kamerabild verfügbar.")
+            self.report("Nicht gespeichert: Noch kein Kamerabild verfügbar.")
             return
         output_path = capture_path(self.validation_root, part_id, datetime.now())
         output_path.parent.mkdir(parents=True, exist_ok=True)
         if not cv2.imwrite(str(output_path), self.latest_frame):
-            self.status.set("Foto konnte nicht gespeichert werden.")
+            self.report("Foto konnte nicht gespeichert werden.")
             return
         relative_path = output_path.relative_to(self.validation_root).as_posix()
         append_manifest_record(self.validation_root, CaptureRecord(relative_path, part_id))
         self.add_reference_image(output_path, part_id)
-        self.status.set(f"Gespeichert und als echte Referenz aktiviert: {relative_path}")
+        self.report(f"Gespeichert und als echte Referenz aktiviert: {relative_path}")
 
     def add_existing_session_references(self) -> None:
         """Make already confirmed images from this session available after an app restart."""
         if self.index is None or self.encoder is None:
             return
+        activated_count = 0
         for record in manifest_records(self.validation_root):
             image_path = (self.validation_root / record.image_path).resolve()
             if image_path.is_file():
                 self.add_reference_image(image_path, record.part_id)
+                activated_count += 1
+        if activated_count:
+            self.report(
+                f"{activated_count} bestätigte Echtbild-Referenzen aus dieser Sitzung aktiviert."
+            )
 
     def add_reference_image(self, image_path: Path, part_id: str) -> None:
         """Add one human-confirmed camera image to the in-memory session index."""

@@ -39,6 +39,19 @@
 - **Tester:** Persistenz des Manifests und die Suche nach einer hinzugefuegten
   Referenz automatisiert getestet.
 
+## Aktivitaetslog der Fotobox
+
+- **Aufgabe:** Bedienpersonen sollen sehen, ob die Kamera, die Erkennung oder
+  das Speichern gerade arbeitet, statt auf eine scheinbar eingefrorene UI zu
+  warten.
+- **Developer:** Ein kompaktes, zeitgestempeltes Fensterlog ergaenzt die
+  Statuszeile fuer die relevanten Arbeitsschritte.
+- **UX:** Das Log nennt klar die gestartete Operation, Trefferzahl und den
+  notwendigen menschlichen Bestaetigungsschritt; Bild-Frames erzeugen keinen
+  unlesbaren Protokollstrom.
+- **Tester:** GUI-Import und die regulaeren Qualitaetschecks werden vor dem
+  Push ausgefuehrt.
+
 ## Wartung: Optionale DINOv2-xFormers-Warnung
 
 - **Architekt:** xFormers bleibt keine Projektabhaengigkeit, weil die Fotobox

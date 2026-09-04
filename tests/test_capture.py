@@ -6,6 +6,7 @@ import pytest
 
 from brick_detection.assisted_capture import (
     new_reference_root,
+    scene_has_changed,
     suggestion_preview_paths,
     visible_suggestions,
 )
@@ -40,6 +41,17 @@ def test_visible_suggestions_filters_by_similarity_and_limits_count() -> None:
     ]
 
     assert visible_suggestions(candidates, minimum_score=0.55, maximum_count=2) == candidates[:2]
+
+
+def test_scene_has_changed_ignores_small_noise_and_detects_a_new_part() -> None:
+    previous = np.full((10, 10), 100, dtype=np.uint8)
+    noisy = previous.copy()
+    noisy[0, 0] = 110
+    changed = previous.copy()
+    changed[2:5, 2:5] = 180
+
+    assert not scene_has_changed(previous, noisy)
+    assert scene_has_changed(previous, changed, minimum_changed_ratio=0.05)
 
 
 def test_new_reference_root_is_separate_from_holdout_root(tmp_path: Path) -> None:

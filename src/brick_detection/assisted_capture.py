@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
+
 from brick_detection.search import PartCandidate
 
 
@@ -49,3 +51,18 @@ def presentation_view_priority(path: Path) -> tuple[int, str]:
         return (preferred_names.index(path.name), path.name)
     except ValueError:
         return (len(preferred_names), path.name)
+
+
+def scene_has_changed(
+    previous: np.ndarray,
+    current: np.ndarray,
+    pixel_difference: int = 25,
+    minimum_changed_ratio: float = 0.004,
+) -> bool:
+    """Detect a meaningful change while ignoring small camera and compression noise."""
+    if previous.shape != current.shape:
+        raise ValueError("Scene signatures must have matching shapes.")
+    if pixel_difference < 1 or not 0 < minimum_changed_ratio <= 1:
+        raise ValueError("Change thresholds must be positive and the ratio must be at most one.")
+    changed = np.abs(previous.astype(np.int16) - current.astype(np.int16)) >= pixel_difference
+    return float(np.count_nonzero(changed)) / changed.size >= minimum_changed_ratio

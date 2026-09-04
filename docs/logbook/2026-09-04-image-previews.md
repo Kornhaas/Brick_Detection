@@ -52,6 +52,19 @@
 - **Tester:** GUI-Import und die regulaeren Qualitaetschecks werden vor dem
   Push ausgefuehrt.
 
+## Automatische Erkennung nach stabilem Flaechenwechsel
+
+- **Aufgabe:** Einlegen und Herausnehmen eines Steins sollen ohne fixe
+  Wartezeit automatisch analysiert werden.
+- **Architekt:** ADR-012 trennt erkannte Bewegung von stabiler Flaeche und nutzt
+  die anfaengliche Leerflaeche fuer eine explizite "kein Teil erkannt"-Meldung.
+- **Developer:** Entprellte Bildsignaturen, eine stabile Dreiproben-Regel und
+  das Zuruecksetzen veralteter Vorschlaege umgesetzt.
+- **UX:** Das Log sagt erst "Aenderung erkannt", dann "Flaeche stabil" und bei
+  leerer Flaeche klar "Kein Teil erkannt".
+- **Tester:** Rausch- und Aenderungsentscheidung automatisiert getestet;
+  vollstaendiger Qualitaetslauf folgt vor dem Push.
+
 ## Wartung: Optionale DINOv2-xFormers-Warnung
 
 - **Architekt:** xFormers bleibt keine Projektabhaengigkeit, weil die Fotobox

@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import argparse
 import tkinter as tk
+from time import monotonic
 from datetime import datetime
 from pathlib import Path
 from tkinter import scrolledtext, ttk
 
 import cv2
+import numpy as np
 from PIL import Image, ImageTk
 
 from brick_detection.assisted_capture import (
     new_reference_root,
+    scene_has_changed,
     suggestion_preview_paths,
     visible_suggestions,
 )
@@ -63,10 +66,15 @@ class CaptureApplication:
             )
         self.minimum_similarity = minimum_similarity
         self.maximum_suggestions = maximum_suggestions
-        self.has_started_initial_recognition = False
         self.has_received_first_frame = False
         self.suggestion_images: list[ImageTk.PhotoImage] = []
         self.camera_error_reported = False
+        self.empty_scene_signature: np.ndarray | None = None
+        self.last_scene_signature: np.ndarray | None = None
+        self.last_scene_sample_at = 0.0
+        self.stable_sample_count = 0
+        self.scene_changed_since_analysis = False
+        self.auto_analysis_scheduled = False
 
         root.title(f"BrickVision – Validierungsaufnahmen ({self.validation_root.name})")
         root.protocol("WM_DELETE_WINDOW", self.close)
@@ -123,9 +131,7 @@ class CaptureApplication:
                     f"Live: {width}×{height}. Ziel: {self.validation_root.name}. "
                     "Erkennung startet …"
                 )
-                if self.index is not None and not self.has_started_initial_recognition:
-                    self.has_started_initial_recognition = True
-                    self.root.after(100, self.suggest)
+            self.observe_scene(frame)
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(rgb_frame)
             image.thumbnail((960, 700))
@@ -138,8 +144,49 @@ class CaptureApplication:
                 self.report("Kein Kamerabild verfügbar. Verbindung und Kameraindex prüfen.")
         self.root.after(30, self.update_preview)
 
+    def observe_scene(self, frame: object) -> None:
+        """Start one analysis only after a meaningful scene change has visibly settled."""
+        if self.index is None or self.auto_analysis_scheduled:
+            return
+        now = monotonic()
+        if now - self.last_scene_sample_at < 0.35:
+            return
+        self.last_scene_sample_at = now
+        signature = cv2.cvtColor(cv2.resize(frame, (320, 240)), cv2.COLOR_BGR2GRAY)
+        signature = cv2.GaussianBlur(signature, (5, 5), 0)
+        if self.last_scene_signature is None:
+            self.last_scene_signature = signature
+            self.empty_scene_signature = signature.copy()
+            self.report("Ausgangsfläche erfasst. Lege einen Stein ein oder nimm ihn heraus.")
+            return
+        changed = scene_has_changed(self.last_scene_signature, signature)
+        self.last_scene_signature = signature
+        if changed:
+            if not self.scene_changed_since_analysis:
+                self.report("Änderung erkannt. Warte, bis die Fläche wieder ruhig ist.")
+            self.scene_changed_since_analysis = True
+            self.stable_sample_count = 0
+            return
+        if not self.scene_changed_since_analysis:
+            return
+        self.stable_sample_count += 1
+        if self.stable_sample_count < 3:
+            return
+        self.scene_changed_since_analysis = False
+        self.auto_analysis_scheduled = True
+        if self.empty_scene_signature is not None and not scene_has_changed(
+            self.empty_scene_signature, signature
+        ):
+            self.report("Fläche wieder leer und stabil. Kein Teil erkannt.")
+            self.clear_suggestions()
+            self.auto_analysis_scheduled = False
+            return
+        self.report("Fläche stabil. Automatische Erkennung startet.")
+        self.root.after(1, self.suggest)
+
     def suggest(self) -> None:
         """Show render-index candidates; saving still requires explicit human confirmation."""
+        self.auto_analysis_scheduled = False
         if self.latest_frame is None or self.index is None or self.encoder is None:
             self.report("Erkennung wartet noch auf ein Kamerabild.")
             return
@@ -153,9 +200,7 @@ class CaptureApplication:
             self.minimum_similarity,
             self.maximum_suggestions,
         )
-        for button in self.suggestion_buttons.winfo_children():
-            button.destroy()
-        self.suggestion_images = []
+        self.clear_suggestions()
         if not candidates:
             self.report("Kein Vorschlag über dem Similarity-Filter. Teil-ID manuell eingeben.")
             return
@@ -180,6 +225,14 @@ class CaptureApplication:
             f"{len(candidates)} Vorschläge bereit; Top: {top_candidate.part_id} "
             f"mit {top_candidate.score:.1%} Ähnlichkeit. Bitte visuell bestätigen."
         )
+
+    def clear_suggestions(self) -> None:
+        """Remove stale part choices when the observed surface becomes empty."""
+        if self.index is None:
+            return
+        for button in self.suggestion_buttons.winfo_children():
+            button.destroy()
+        self.suggestion_images = []
 
     @staticmethod
     def load_suggestion_preview(path: Path | None) -> ImageTk.PhotoImage | None:

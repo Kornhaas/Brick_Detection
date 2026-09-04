@@ -20,6 +20,7 @@ from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
     capture_path,
+    manifest_records,
     new_holdout_root,
     validate_part_id,
 )
@@ -60,6 +61,7 @@ class CaptureApplication:
             raise RuntimeError(
                 f"Index expects {self.index.model_version}, encoder is {self.encoder.version}."
             )
+        self.add_existing_session_references()
         self.minimum_similarity = minimum_similarity
         self.maximum_suggestions = maximum_suggestions
         self.has_started_initial_recognition = False
@@ -184,7 +186,25 @@ class CaptureApplication:
             return
         relative_path = output_path.relative_to(self.validation_root).as_posix()
         append_manifest_record(self.validation_root, CaptureRecord(relative_path, part_id))
-        self.status.set(f"Gespeichert: {relative_path}")
+        self.add_reference_image(output_path, part_id)
+        self.status.set(f"Gespeichert und als echte Referenz aktiviert: {relative_path}")
+
+    def add_existing_session_references(self) -> None:
+        """Make already confirmed images from this session available after an app restart."""
+        if self.index is None or self.encoder is None:
+            return
+        for record in manifest_records(self.validation_root):
+            image_path = (self.validation_root / record.image_path).resolve()
+            if image_path.is_file():
+                self.add_reference_image(image_path, record.part_id)
+
+    def add_reference_image(self, image_path: Path, part_id: str) -> None:
+        """Add one human-confirmed camera image to the in-memory session index."""
+        if self.index is None or self.encoder is None:
+            return
+        with Image.open(image_path) as image:
+            vector = self.encoder.embed_images([image.convert("RGB")], crop_foreground=True)[0]
+        self.index = self.index.with_reference(vector, part_id, str(image_path.resolve()))
 
     def close(self) -> None:
         """Release the camera before closing the local window."""

@@ -51,3 +51,17 @@ def append_manifest_record(validation_root: Path, record: CaptureRecord) -> None
         writer.writerow(
             {"image_path": record.image_path, "part_id": validate_part_id(record.part_id)}
         )
+
+
+def manifest_records(validation_root: Path) -> list[CaptureRecord]:
+    """Load the deliberate labels already recorded for one local capture session."""
+    manifest_path = validation_root / "manifest.csv"
+    if not manifest_path.is_file():
+        return []
+    with manifest_path.open(encoding="utf-8-sig", newline="") as file:
+        reader = csv.DictReader(file)
+        return [
+            CaptureRecord(row["image_path"], validate_part_id(row["part_id"]))
+            for row in reader
+            if row.get("image_path") and row.get("part_id")
+        ]

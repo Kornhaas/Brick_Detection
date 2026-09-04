@@ -26,6 +26,19 @@
 - **Tester:** Der reale Render `3002/upper_030_45.png` wird von 512 auf einen
   193-Pixel-Teilausschnitt reduziert. Alle lokalen Qualitaetschecks erfolgreich.
 
+## Echtbild nach manueller Bestaetigung sofort verwenden
+
+- **Aufgabe:** Ein korrekt manuell gespeicherter Stein muss bei der naechsten
+  Suche derselben Aufnahme-Sitzung beruecksichtigt werden.
+- **Architekt:** ADR-011 definiert einen in-memory Overlay ueber dem
+  unveraenderten, reproduzierbaren Renderindex.
+- **Developer:** Manifestbilder werden beim Sitzungsstart geladen; jedes neue
+  bestaetigte Bild wird direkt als Kamera-Embedding hinzugefuegt.
+- **UX:** Manuelles Speichern meldet sichtbar, dass die echte Referenz aktiv
+  ist; nur ausdruecklich bestaetigte Labels beeinflussen Vorschlaege.
+- **Tester:** Persistenz des Manifests und die Suche nach einer hinzugefuegten
+  Referenz automatisiert getestet.
+
 ## Wartung: Optionale DINOv2-xFormers-Warnung
 
 - **Architekt:** xFormers bleibt keine Projektabhaengigkeit, weil die Fotobox

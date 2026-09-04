@@ -1,6 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from brick_detection.assisted_capture import (
@@ -12,10 +13,11 @@ from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
     capture_path,
+    manifest_records,
     new_holdout_root,
     validate_part_id,
 )
-from brick_detection.search import PartCandidate
+from brick_detection.search import EmbeddingIndex, PartCandidate
 
 
 def test_capture_path_is_below_images_directory_and_uses_safe_part_id(tmp_path: Path) -> None:
@@ -76,3 +78,19 @@ def test_append_manifest_record_creates_a_valid_csv(tmp_path: Path) -> None:
     assert (tmp_path / "manifest.csv").read_text(encoding="utf-8") == (
         "image_path,part_id\nimages/3001_test.jpg,3001\nimages/3002_test.jpg,3002\n"
     )
+    assert manifest_records(tmp_path) == [
+        CaptureRecord("images/3001_test.jpg", "3001"),
+        CaptureRecord("images/3002_test.jpg", "3002"),
+    ]
+
+
+def test_index_with_reference_makes_a_confirmed_camera_embedding_searchable() -> None:
+    index = EmbeddingIndex(
+        np.array([[1.0, 0.0]], dtype=np.float32), ("3001",), ("render.png",), "test-v1"
+    )
+
+    updated = index.with_reference(np.array([0.0, 2.0], dtype=np.float32), "3002", "real.jpg")
+
+    assert updated.part_ids == ("3001", "3002")
+    assert updated.image_paths[-1] == "real.jpg"
+    assert updated.query(np.array([0.0, 1.0], dtype=np.float32))[0].part_id == "3002"

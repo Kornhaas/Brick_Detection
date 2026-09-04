@@ -60,6 +60,18 @@ class EmbeddingIndex:
         ]
         return sorted(candidates, key=lambda candidate: candidate.score, reverse=True)[:top_part_k]
 
+    def with_reference(self, vector: np.ndarray, part_id: str, image_path: str) -> EmbeddingIndex:
+        """Return a new index with one human-confirmed reference embedding added."""
+        if vector.shape != (self.vectors.shape[1],):
+            raise ValueError("Reference vector dimension does not match index dimension.")
+        normalized = vector / np.linalg.norm(vector)
+        return EmbeddingIndex(
+            np.vstack((self.vectors, normalized.astype(np.float32))),
+            self.part_ids + (part_id,),
+            self.image_paths + (image_path,),
+            self.model_version,
+        )
+
     def save(self, path: Path) -> None:
         """Persist vectors and metadata in one NumPy archive."""
         path.parent.mkdir(parents=True, exist_ok=True)

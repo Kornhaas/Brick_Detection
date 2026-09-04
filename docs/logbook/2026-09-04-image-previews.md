@@ -65,6 +65,20 @@
 - **Tester:** Rausch- und Aenderungsentscheidung automatisiert getestet;
   vollstaendiger Qualitaetslauf folgt vor dem Push.
 
+## Starke Evidenz statt Durchschnitt aller Ansichten
+
+- **Aufgabe:** Die Rohsimilarity soll nicht durch viele schwache Ansichten
+  desselben Teils kuenstlich gedrueckt werden.
+- **Architekt:** ADR-013 definiert die drei staerksten Referenzansichten als
+  Kandidatenevidenz; der Wert bleibt eine Aehnlichkeit, keine Wahrscheinlichkeit.
+- **Developer:** Teilranking auf den Mittelwert der drei staerksten Treffer
+  umgestellt.
+- **UX:** Die sichtbaren Prozentwerte sind nun besser mit der besten sichtbaren
+  Referenz begruendet, ohne eine falsche Sicherheit zu behaupten.
+- **Tester:** Leave-one-out auf 71 bestaetigten Fotos: Top-1 52,1 % auf 85,9 %,
+  Top-3 91,5 % auf 95,8 %, Median des korrekten Scores 66,5 % auf 83,4 %.
+  Der getrennte Render-Holdout bleibt vergleichbar: Top-1 34,9 %, Top-3 67,5 %.
+
 ## Wartung: Optionale DINOv2-xFormers-Warnung
 
 - **Architekt:** xFormers bleibt keine Projektabhaengigkeit, weil die Fotobox

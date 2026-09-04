@@ -37,6 +37,7 @@ class EmbeddingIndex:
         vector: np.ndarray,
         top_render_k: int = 50,
         top_part_k: int = 5,
+        evidence_view_k: int = 3,
         exclude_image_path: str | None = None,
     ) -> list[PartCandidate]:
         """Find top renders, then aggregate their scores at part level."""
@@ -54,10 +55,14 @@ class EmbeddingIndex:
         for index in indices:
             if np.isfinite(scores[index]):
                 grouped.setdefault(self.part_ids[int(index)], []).append(float(scores[index]))
-        candidates = [
-            PartCandidate(part_id, sum(values) / len(values), len(values))
-            for part_id, values in grouped.items()
-        ]
+        if evidence_view_k < 1:
+            raise ValueError("Evidence view count must be positive.")
+        candidates = []
+        for part_id, values in grouped.items():
+            strongest_evidence = sorted(values, reverse=True)[:evidence_view_k]
+            candidates.append(
+                PartCandidate(part_id, sum(strongest_evidence) / len(strongest_evidence), len(values))
+            )
         return sorted(candidates, key=lambda candidate: candidate.score, reverse=True)[:top_part_k]
 
     def with_reference(self, vector: np.ndarray, part_id: str, image_path: str) -> EmbeddingIndex:

@@ -51,3 +51,21 @@ ergab auf diesem selben Satz:
 
 Das belegt den Bildausschnitt als wesentlichen Hebel, ist aber weiterhin ein
 Diagnoseergebnis und keine Abnahme auf unabhängigen Daten.
+
+## Unabhängige Holdout-Abnahme
+
+Ein zweiter, getrennt angelegter Fotobox-Satz umfasst 83 Bilder aller 10
+PoC-Teil-IDs. Er wurde erst nach der Wahl der Vorverarbeitung aufgenommen und
+lief mit derselben, expliziten Vordergrund-Zuschnittsoption.
+
+| Kennzahl | Holdout-Ergebnis |
+| --- | ---: |
+| Top-1 | 24,1 % |
+| Top-3 | 60,2 % |
+| Top-5 | 77,1 % |
+| MRR@10 | 0,454 |
+
+Damit bestätigt der unabhängige Satz die Verbesserung gegenüber der Rohbild-
+Baseline, erreicht aber noch nicht die Qualität für automatische
+Lagerzuordnungen. Besonders `3710` (Top-5 12,5 %) und `3068b` (Top-5 60,0 %)
+benötigen gezielte Verbesserungen an Referenzansichten oder Modellstrategie.

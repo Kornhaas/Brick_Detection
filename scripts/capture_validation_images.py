@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import argparse
 import tkinter as tk
-from time import monotonic
 from datetime import datetime
 from pathlib import Path
+from time import monotonic
 from tkinter import scrolledtext, ttk
 
 import cv2

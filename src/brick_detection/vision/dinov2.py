@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from importlib import import_module
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -45,17 +46,23 @@ class DINOv2Encoder:
     ) -> np.ndarray:
         """Return L2-normalized embeddings in the input path order."""
         image_module = import_module("PIL.Image")
+        images = [image_module.open(path).convert("RGB") for path in paths]
+        return self.embed_images(images, batch_size, crop_foreground)
+
+    def embed_images(
+        self, images: Sequence[Any], batch_size: int = 32, crop_foreground: bool = False
+    ) -> np.ndarray:
+        """Return normalized embeddings for already loaded RGB-compatible images."""
 
         vectors: list[np.ndarray] = []
         with self._torch.inference_mode():
-            for start in range(0, len(paths), batch_size):
-                images = []
-                for path in paths[start : start + batch_size]:
-                    image = image_module.open(path).convert("RGB")
+            for start in range(0, len(images), batch_size):
+                transformed = []
+                for image in images[start : start + batch_size]:
                     if crop_foreground:
                         image = foreground_square_crop(image)
-                    images.append(self.transform(image))
-                output = self.model(self._torch.stack(images).to(self.device))
+                    transformed.append(self.transform(image))
+                output = self.model(self._torch.stack(transformed).to(self.device))
                 normalized = self._torch.nn.functional.normalize(output, dim=1)
                 vectors.append(normalized.cpu().numpy().astype(np.float32))
         return np.concatenate(vectors, axis=0) if vectors else np.empty((0, 0), dtype=np.float32)

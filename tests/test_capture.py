@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from brick_detection.assisted_capture import new_reference_root, visible_suggestions
 from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
@@ -10,6 +11,7 @@ from brick_detection.capture import (
     new_holdout_root,
     validate_part_id,
 )
+from brick_detection.search import PartCandidate
 
 
 def test_capture_path_is_below_images_directory_and_uses_safe_part_id(tmp_path: Path) -> None:
@@ -22,6 +24,22 @@ def test_new_holdout_root_is_distinct_and_date_stamped(tmp_path: Path) -> None:
     path = new_holdout_root(tmp_path, datetime(2026, 9, 4, 13, 30, 15))
 
     assert path == tmp_path / "holdout-20260904-133015"
+
+
+def test_visible_suggestions_filters_by_similarity_and_limits_count() -> None:
+    candidates = [
+        PartCandidate("3001", 0.61, 12),
+        PartCandidate("3002", 0.59, 10),
+        PartCandidate("3003", 0.52, 9),
+    ]
+
+    assert visible_suggestions(candidates, minimum_score=0.55, maximum_count=2) == candidates[:2]
+
+
+def test_new_reference_root_is_separate_from_holdout_root(tmp_path: Path) -> None:
+    assert new_reference_root(tmp_path, datetime(2026, 9, 4, 13, 30, 15)) == (
+        tmp_path / "session-20260904-133015"
+    )
 
 
 @pytest.mark.parametrize("part_id", ["", "  ", "3001/other", "3001.csv", "part id"])

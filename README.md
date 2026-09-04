@@ -67,6 +67,21 @@ Vordergrund-Zuschnitt verwendet werden: `--foreground-crop`. Derselbe Schalter
 steht bei `recognize_image.py` zur Verfügung. Details und Grenzen stehen in
 [ADR-007](docs/architecture/decisions/ADR-007-fotobox-vordergrund-zuschnitt.md).
 
+### Assistierte Referenzaufnahmen
+
+Für den schrittweisen Aufbau echter Referenzbilder kann die Fotobox den
+Renderindex als Vorschlagsquelle nutzen. Die angezeigte Similarity ist keine
+Wahrscheinlichkeit: Ein Bild wird nur nach menschlicher Bestätigung gespeichert.
+
+```powershell
+poetry run python scripts/capture_validation_images.py --camera 0 --index data/indexes/poc-v1.npz
+```
+
+Der Modus erzeugt automatisch einen getrennten Ordner unter
+`data/references/real/session-.../`. Der anfängliche Filter liegt bei 50 %;
+`--min-similarity 0.6` setzt ihn auf 60 %. Weitere Regeln stehen in
+[ADR-008](docs/architecture/decisions/ADR-008-menschlich-bestaetigte-referenzbilder.md).
+
 ## Qualität und Zusammenarbeit
 
 - Rollen, Arbeitsablauf und Qualitätsregeln: [AGENTS.md](AGENTS.md)

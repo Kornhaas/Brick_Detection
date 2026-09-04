@@ -82,6 +82,12 @@ Der Modus erzeugt automatisch einen getrennten Ordner unter
 `--min-similarity 0.6` setzt ihn auf 60 %. Weitere Regeln stehen in
 [ADR-008](docs/architecture/decisions/ADR-008-menschlich-bestaetigte-referenzbilder.md).
 
+Der erweiterte lokale Vergleichsindex kann nach der Renderung mit
+`data/indexes/poc-60-v1.npz` als `--index` verwendet werden. Seine
+Ansichtsmatrix und Messwerte sind in
+[ADR-009](docs/architecture/decisions/ADR-009-poc-60-ansichtsmatrix.md)
+dokumentiert.
+
 ## Qualität und Zusammenarbeit
 
 - Rollen, Arbeitsablauf und Qualitätsregeln: [AGENTS.md](AGENTS.md)

@@ -10,6 +10,9 @@ from pathlib import Path
 import bpy
 from mathutils import Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from brick_detection.rendering import view_definitions  # noqa: E402
+
 
 def arguments() -> list[str]:
     return sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
@@ -74,28 +77,6 @@ def apply_reference_material() -> None:
             object_.data.materials.append(material)
 
 
-def view_definitions(view_set: str) -> list[dict[str, float | str]]:
-    if view_set == "single":
-        return [{"name": "view_00", "azimuth": -45.0, "elevation": 28.0}]
-    if view_set == "poc-28":
-        orbit_views = [
-            {
-                "name": f"orbit_{azimuth:03d}_{elevation:02d}",
-                "azimuth": float(azimuth),
-                "elevation": float(elevation),
-            }
-            for azimuth in range(0, 360, 45)
-            for elevation in (20, 45, 70)
-        ]
-        return orbit_views + [
-            {"name": "top", "azimuth": 0.0, "elevation": 88.0},
-            {"name": "bottom", "azimuth": 0.0, "elevation": -70.0},
-            {"name": "front", "azimuth": 0.0, "elevation": 0.0},
-            {"name": "back", "azimuth": 180.0, "elevation": 0.0},
-        ]
-    raise SystemExit(f"Unknown view set: {view_set}. Use 'single' or 'poc-28'.")
-
-
 def add_camera(bounds_min: Vector, bounds_max: Vector, azimuth: float, elevation: float) -> None:
     center = (bounds_min + bounds_max) / 2
     radius = max((bounds_max - bounds_min).length / 2, 0.05)
@@ -157,7 +138,11 @@ def main() -> None:
     output_directory.mkdir(parents=True, exist_ok=True)
 
     metadata: list[dict[str, float | str]] = []
-    for view in view_definitions(view_set):
+    try:
+        views = view_definitions(view_set)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
+    for view in views:
         add_camera(bounds_min, bounds_max, float(view["azimuth"]), float(view["elevation"]))
         filename = f"{view['name']}.png"
         scene.render.filepath = str(output_directory / filename)

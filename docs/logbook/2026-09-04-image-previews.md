@@ -13,3 +13,15 @@
 - **Tester:** Auswahl der stabilen Vorschauansicht automatisiert getestet.
   `ruff format --check`, `ruff check`, `mypy src` und `pytest` (24 Tests)
   erfolgreich ausgefuehrt.
+
+## Nachsteuerung: Erkennbare Katalogansichten
+
+- **Aufgabe:** Die erste Umsetzung war zu klein und nutzte teilweise unguenstige
+  Retrieval-Perspektiven; die direkte Nutzerrueckmeldung wird umgesetzt.
+- **Architekt:** ADR-010 trennt Katalogdarstellung verbindlich vom Ranking.
+- **Developer:** Bevorzugte 45-Grad-Dreiviertelansicht, lokaler Zuschnitt auf
+  das Teil und eine Vorschaugroesse von bis zu 180 Pixeln umgesetzt.
+- **UX:** Jede Bildkarte bleibt gemeinsam mit ID und Aehnlichkeitswert klickbar;
+  die Teilform statt der leeren Renderflaeche steht im Vordergrund.
+- **Tester:** Der reale Render `3002/upper_030_45.png` wird von 512 auf einen
+  193-Pixel-Teilausschnitt reduziert. Alle lokalen Qualitaetschecks erfolgreich.

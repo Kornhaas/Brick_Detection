@@ -52,16 +52,20 @@ def test_validate_part_id_rejects_unsafe_names(part_id: str) -> None:
         validate_part_id(part_id)
 
 
-def test_suggestion_preview_paths_use_first_stable_render_for_each_part() -> None:
+def test_suggestion_preview_paths_prefer_a_consistent_three_quarter_render() -> None:
     previews = suggestion_preview_paths(
         [PartCandidate("3002", 0.8, 1), PartCandidate("3001", 0.7, 1)],
-        ("/renders/3001/00.png", "/renders/3001/01.png", "/renders/3002/00.png"),
+        (
+            "/renders/3001/lower_000.png",
+            "/renders/3001/upper_030_45.png",
+            "/renders/3002/orbit_045_45.png",
+        ),
         ("3001", "3001", "3002"),
     )
 
     assert previews == {
-        "3001": Path("/renders/3001/00.png"),
-        "3002": Path("/renders/3002/00.png"),
+        "3001": Path("/renders/3001/upper_030_45.png"),
+        "3002": Path("/renders/3002/orbit_045_45.png"),
     }
 
 

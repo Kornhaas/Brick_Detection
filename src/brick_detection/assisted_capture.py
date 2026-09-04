@@ -32,11 +32,20 @@ def suggestion_preview_paths(
     """Choose one stable rendered preview image for every visible part suggestion."""
     if len(image_paths) != len(part_ids):
         raise ValueError("Image paths and part IDs must have matching lengths.")
-    first_path_by_part: dict[str, Path] = {}
+    paths_by_part: dict[str, list[Path]] = {}
     for image_path, part_id in zip(image_paths, part_ids, strict=True):
-        first_path_by_part.setdefault(part_id, Path(image_path))
+        paths_by_part.setdefault(part_id, []).append(Path(image_path))
     return {
-        candidate.part_id: first_path_by_part[candidate.part_id]
+        candidate.part_id: min(paths_by_part[candidate.part_id], key=presentation_view_priority)
         for candidate in candidates
-        if candidate.part_id in first_path_by_part
+        if candidate.part_id in paths_by_part
     }
+
+
+def presentation_view_priority(path: Path) -> tuple[int, str]:
+    """Prioritize the consistent three-quarter render made for human confirmation."""
+    preferred_names = ("upper_030_45.png", "orbit_045_45.png", "view_00.png")
+    try:
+        return (preferred_names.index(path.name), path.name)
+    except ValueError:
+        return (len(preferred_names), path.name)

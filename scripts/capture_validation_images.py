@@ -25,6 +25,7 @@ from brick_detection.capture import (
 )
 from brick_detection.search import EmbeddingIndex
 from brick_detection.vision import DINOv2Encoder
+from brick_detection.vision.preprocess import foreground_square_crop
 
 
 class CaptureApplication:
@@ -157,7 +158,8 @@ class CaptureApplication:
             return None
         with Image.open(path) as image:
             preview = image.copy()
-        preview.thumbnail((110, 110))
+        preview = foreground_square_crop(preview, padding_ratio=0.12)
+        preview.thumbnail((180, 180))
         return ImageTk.PhotoImage(image=preview)
 
     def confirm_suggestion(self, part_id: str) -> None:

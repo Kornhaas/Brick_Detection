@@ -59,6 +59,11 @@ poetry install --with dev,ml,capture
 poetry run python scripts/evaluate_real_images.py --index data/indexes/poc-v1.npz --manifest data/validation/manifest.csv
 ```
 
+Bei Bildern aus der festen Fotobox kann der explizite, noch zu validierende
+Vordergrund-Zuschnitt verwendet werden: `--foreground-crop`. Derselbe Schalter
+steht bei `recognize_image.py` zur Verfügung. Details und Grenzen stehen in
+[ADR-007](docs/architecture/decisions/ADR-007-fotobox-vordergrund-zuschnitt.md).
+
 ## Qualität und Zusammenarbeit
 
 - Rollen, Arbeitsablauf und Qualitätsregeln: [AGENTS.md](AGENTS.md)

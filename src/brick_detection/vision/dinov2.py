@@ -8,6 +8,8 @@ from pathlib import Path
 
 import numpy as np
 
+from brick_detection.vision.preprocess import foreground_square_crop
+
 DINOV2_REVISION = "7764ea0f912e53c92e82eb78a2a1631e92725fc8"
 MODEL_NAME = "dinov2_vits14"
 
@@ -38,17 +40,21 @@ class DINOv2Encoder:
         """Return a stable identifier stored alongside generated embeddings."""
         return f"{MODEL_NAME}@{DINOV2_REVISION[:12]}"
 
-    def embed_paths(self, paths: Sequence[Path], batch_size: int = 32) -> np.ndarray:
+    def embed_paths(
+        self, paths: Sequence[Path], batch_size: int = 32, crop_foreground: bool = False
+    ) -> np.ndarray:
         """Return L2-normalized embeddings in the input path order."""
         image_module = import_module("PIL.Image")
 
         vectors: list[np.ndarray] = []
         with self._torch.inference_mode():
             for start in range(0, len(paths), batch_size):
-                images = [
-                    self.transform(image_module.open(path).convert("RGB"))
-                    for path in paths[start : start + batch_size]
-                ]
+                images = []
+                for path in paths[start : start + batch_size]:
+                    image = image_module.open(path).convert("RGB")
+                    if crop_foreground:
+                        image = foreground_square_crop(image)
+                    images.append(self.transform(image))
                 output = self.model(self._torch.stack(images).to(self.device))
                 normalized = self._torch.nn.functional.normalize(output, dim=1)
                 vectors.append(normalized.cpu().numpy().astype(np.float32))

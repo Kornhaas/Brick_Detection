@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 
 def retrieval_metrics(ranks: Sequence[int | None]) -> dict[str, float]:
@@ -16,3 +16,10 @@ def retrieval_metrics(ranks: Sequence[int | None]) -> dict[str, float]:
         "top_5": sum(rank is not None and rank <= 5 for rank in ranks) / count,
         "mrr_at_10": sum(1 / rank if rank is not None else 0 for rank in ranks) / count,
     }
+
+
+def metrics_by_part(
+    ranks_by_part: Mapping[str, Sequence[int | None]],
+) -> dict[str, dict[str, float]]:
+    """Calculate retrieval metrics separately for every labeled part."""
+    return {part_id: retrieval_metrics(ranks) for part_id, ranks in sorted(ranks_by_part.items())}

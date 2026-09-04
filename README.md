@@ -50,9 +50,12 @@ Auflösung. Für einen schnelleren Einrichtungscheck kann sie etwa mit
 `--width 1920 --height 1080 --fps 30` gestartet werden.
 
 Teil-ID eingeben, den Stein zentrieren und „Foto aufnehmen“ (oder Enter)
-wählen. Bilder und `manifest.csv` bleiben unter `data/validation/` lokal und
-werden nicht eingecheckt. Die erkannten Bilder können anschließend gemessen
-werden:
+wählen. Jeder Start ohne `--output` erzeugt automatisch einen neuen,
+zeitgestempelten `data/validation/holdout-.../`-Datensatz; so bleibt er vom
+bisherigen Diagnosesatz getrennt. Für eine Fortsetzung desselben Satzes kann
+explizit dessen Verzeichnis mit `--output` angegeben werden. Bilder und
+`manifest.csv` werden nicht eingecheckt. Die erkannten Bilder können anschließend
+gemessen werden:
 
 ```powershell
 poetry install --with dev,ml,capture

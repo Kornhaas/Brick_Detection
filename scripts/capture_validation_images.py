@@ -15,6 +15,7 @@ from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
     capture_path,
+    new_holdout_root,
     validate_part_id,
 )
 
@@ -43,7 +44,7 @@ class CaptureApplication:
         self.camera.set(cv2.CAP_PROP_FPS, fps)
         self.latest_frame: object | None = None
 
-        root.title("BrickVision – Validierungsaufnahmen")
+        root.title(f"BrickVision – Validierungsaufnahmen ({self.validation_root.name})")
         root.protocol("WM_DELETE_WINDOW", self.close)
         root.minsize(760, 620)
         controls = ttk.Frame(root, padding=12)
@@ -71,7 +72,9 @@ class CaptureApplication:
             self.latest_frame = frame
             if self.status.get().endswith("wird gestartet …"):
                 height, width = frame.shape[:2]
-                self.status.set(f"Live: {width}×{height}. Teil-ID eingeben und Aufnahme auslösen.")
+                self.status.set(
+                    f"Live: {width}×{height}. Ziel: {self.validation_root.name}. Teil-ID eingeben."
+                )
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(rgb_frame)
             image.thumbnail((960, 700))
@@ -117,15 +120,14 @@ def main() -> None:
         "--height", type=int, default=3496, help="Requested capture height (default: 3496)"
     )
     parser.add_argument("--fps", type=int, default=15, help="Requested capture rate (default: 15)")
-    parser.add_argument(
-        "--output", type=Path, default=Path("data/validation"), help="Local validation directory"
-    )
+    parser.add_argument("--output", type=Path, help="Existing local validation directory to resume")
     arguments = parser.parse_args()
+    output = arguments.output or new_holdout_root(Path("data/validation"), datetime.now())
     root = tk.Tk()
     CaptureApplication(
         root,
         arguments.camera,
-        arguments.output,
+        output,
         arguments.width,
         arguments.height,
         arguments.fps,

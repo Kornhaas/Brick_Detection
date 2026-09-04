@@ -34,6 +34,11 @@ def capture_path(validation_root: Path, part_id: str, captured_at: datetime) -> 
     return validation_root / "images" / f"{safe_part_id}_{timestamp}.jpg"
 
 
+def new_holdout_root(base_directory: Path, created_at: datetime) -> Path:
+    """Create a distinct, date-stamped directory name for an unseen evaluation set."""
+    return base_directory / f"holdout-{created_at.strftime('%Y%m%d-%H%M%S')}"
+
+
 def append_manifest_record(validation_root: Path, record: CaptureRecord) -> None:
     """Append one relative image path and its known part ID to the CSV manifest."""
     manifest_path = validation_root / "manifest.csv"

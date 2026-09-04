@@ -7,6 +7,7 @@ from brick_detection.capture import (
     CaptureRecord,
     append_manifest_record,
     capture_path,
+    new_holdout_root,
     validate_part_id,
 )
 
@@ -15,6 +16,12 @@ def test_capture_path_is_below_images_directory_and_uses_safe_part_id(tmp_path: 
     path = capture_path(tmp_path, "3001", datetime(2026, 9, 4, 12, 30, 15, 123456))
 
     assert path == tmp_path / "images" / "3001_20260904T123015123456.jpg"
+
+
+def test_new_holdout_root_is_distinct_and_date_stamped(tmp_path: Path) -> None:
+    path = new_holdout_root(tmp_path, datetime(2026, 9, 4, 13, 30, 15))
+
+    assert path == tmp_path / "holdout-20260904-133015"
 
 
 @pytest.mark.parametrize("part_id", ["", "  ", "3001/other", "3001.csv", "part id"])

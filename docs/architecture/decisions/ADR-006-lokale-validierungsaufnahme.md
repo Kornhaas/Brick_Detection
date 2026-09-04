@@ -19,6 +19,10 @@ LDraw-Teil-ID gespeichert werden. Das Bild landet in
 `data/validation/images/`; die App ergänzt unmittelbar die zugehörige Zeile in
 `data/validation/manifest.csv`. Beide Pfade bleiben durch `.gitignore` lokal.
 
+Ohne explizites `--output` erzeugt jeder App-Start einen neuen, zeitgestempelten
+Holdout-Ordner unter `data/validation/`. Ein vorhandener Satz wird nur mit
+einem ausdrücklich angegebenen `--output` fortgesetzt.
+
 OpenCV und Pillow liegen in der optionalen Poetry-Gruppe `capture`. Die App
 hat weder Netzwerkzugriff noch Zugriff auf Brick Manager oder eine
 Lagerzuordnung.

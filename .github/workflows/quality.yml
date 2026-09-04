@@ -17,7 +17,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: poetry
       - name: Install Poetry
         run: pipx install poetry==1.8.4
       - name: Install project and quality tools
@@ -31,4 +30,4 @@ jobs:
       - name: Test
         run: poetry run pytest
       - name: Dependency vulnerability audit
-        run: poetry run pip install pip-audit && poetry run pip-audit
+        run: poetry run pip-audit

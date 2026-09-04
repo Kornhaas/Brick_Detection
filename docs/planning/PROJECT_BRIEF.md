@@ -7,6 +7,10 @@ einer anderen externen Erkennungs-API. Zunächst steht die Identifikation eines
 einzelnen, freigestellten Teils aus einem Bild im Vordergrund. Eine WebUI zeigt
 die besten Kandidaten und sammelt bestätigendes oder korrigierendes Feedback.
 
+Der langfristige Nordstern ist eine stationäre Kamera-Box, die ein bestätigtes
+Teil über den bestehenden Brick Manager einem Lagerplatz zuordnet und diesen
+auf einem kleinen Display zeigt. Details: [Nordstern](NORTH_STAR.md).
+
 ## Leitprinzip
 
 Wir validieren zuerst die zentrale Hypothese statt früh eine große Anwendung

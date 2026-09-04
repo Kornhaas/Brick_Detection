@@ -25,3 +25,12 @@
   die Teilform statt der leeren Renderflaeche steht im Vordergrund.
 - **Tester:** Der reale Render `3002/upper_030_45.png` wird von 512 auf einen
   193-Pixel-Teilausschnitt reduziert. Alle lokalen Qualitaetschecks erfolgreich.
+
+## Wartung: Optionale DINOv2-xFormers-Warnung
+
+- **Architekt:** xFormers bleibt keine Projektabhaengigkeit, weil die Fotobox
+  einzelne Bilder verarbeitet und die optionale Beschleunigung nicht benoetigt.
+- **Developer:** Die bekannte, harmlose Drittanbieterwarnung wird nur waehrend
+  des DINOv2-Ladens gezielt ausgeblendet; andere Warnungen bleiben sichtbar.
+- **UX:** Die lokale Konsole zeigt keine irrefuehrende Fehlermeldung mehr.
+- **Tester:** Der reguläre Test- und Qualitaetslauf wird vor dem Push ausgefuehrt.

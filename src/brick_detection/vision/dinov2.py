@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from importlib import import_module
 from pathlib import Path
@@ -24,9 +25,16 @@ class DINOv2Encoder:
 
         self._torch = torch
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = torch.hub.load(
-            f"facebookresearch/dinov2:{DINOV2_REVISION}", MODEL_NAME, trust_repo=True
-        ).to(self.device)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"xFormers is not available.*",
+                category=UserWarning,
+                module=r"dinov2\.layers\..*",
+            )
+            self.model = torch.hub.load(
+                f"facebookresearch/dinov2:{DINOV2_REVISION}", MODEL_NAME, trust_repo=True
+            ).to(self.device)
         self.model.eval()
         self.transform = transforms.Compose(
             [
